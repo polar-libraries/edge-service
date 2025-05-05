@@ -1,0 +1,12 @@
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          test:
+            client-id: test
+            client-secret: secret
+            provider: test
+        provider:
+          test:
+            issuer-uri: http://test-issuer.com
