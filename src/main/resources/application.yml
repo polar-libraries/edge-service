@@ -4,6 +4,7 @@ server:
     connection-timeout: 2s
     idle-timeout: 15s
   shutdown: graceful
+
 spring:
   application:
     name: edge-service
@@ -14,16 +15,17 @@ spring:
   cloud:
     config:
       uri: http://localhost:8888
-      request-connect-timeout: 5000
-      request-read-timeout: 5000
+      request-connect-timeout: 5000 # 5s
+      request-read-timeout: 5000 # 5s
       fail-fast: false
       retry:
         max-attempts: 6
-        initial-interval: 1000
+        initial-interval: 1000 # 1s
+        max-interval: 2000 # 2s
         multiplier: 1.1
     gateway:
       httpclient:
-        connect-timeout: 2000
+        connect-timeout: 2000 # 2s
         response-timeout: 5s
         pool:
           type: elastic
@@ -45,10 +47,14 @@ spring:
             exceptions: java.io.IOException, java.util.concurrent.TimeoutException
             backoff:
               firstBackoff: 50ms
-              maxBackoff: 500ms
+              maxBackOff: 500ms
               factor: 2
               basedOnPreviousValue: false
       routes:
+        - id: spa-route
+          uri: ${SPA_URL:http://localhost:9004}
+          predicates:
+            - Path=/,/*.css,/*.js,/favicon.ico
         - id: catalog-route
           uri: ${CATALOG_SERVICE_URL:http://localhost:9001}/books
           predicates:
@@ -66,19 +72,32 @@ spring:
             - name: CircuitBreaker
               args:
                 name: orderCircuitBreaker
-                args:
-                  name: orderCircuitBreaker
-  data:
+  redis:
+    connect-timeout: 2s
+    host: polar-redis
+    port: 6379
+    timeout: 1s
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 1
+  session:
+    store-type: redis
+    timeout: 10m
     redis:
-      host: ${SPRING_REDIS_HOST:localhost}
-      port: ${SPRING_REDIS_PORT:6379}
-      connect-timeout: 2s
-      timeout: 1s
-    session:
-      store-type: redis
-      timeout: 10m
-      redis:
-        namespace: polar:edge
+      namespace: polar:edge
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: edge-service
+            client-secret: polar-keycloak-secret
+            scope: openid
+        provider:
+          keycloak:
+            issuer-uri: http://polar-keycloak:8080/realms/PolarBookshop
 
 resilience4j:
   circuitbreaker:
@@ -88,11 +107,28 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 5
         failureRateThreshold: 50
         waitDurationInOpenState: 15000
-    timelimiter:
-      configs:
-        default:
-          timeoutDuration: 5s
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 5s
 
 #logging:
 #  level:
 #    io.github.resilience4j: DEBUG
+
+#logging:
+#  level:
+#    io.github.resilience4j: DEBUG
+
+#logging:
+#  level:
+#    io.github.resilience4j: DEBUG
+
+#logging:
+#  level:
+#    org.springframework.security: DEBUG
+
+#logging:
+#  level:
+#    org.springframework.data.redis: DEBUG
+#    io.lettuce.core: DEBUG
