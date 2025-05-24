@@ -33,6 +33,7 @@ spring:
           max-life-time: 60s
       default-filters:
         - SaveSession
+        - TokenRelay
         - name: RequestRateLimiter
           args:
             redis-rate-limiter:
@@ -94,7 +95,8 @@ spring:
           keycloak:
             client-id: edge-service
             client-secret: polar-keycloak-secret
-            scope: openid
+            scope: openid, roles
+            authorization-grant-type: authorization_code
         provider:
           keycloak:
             issuer-uri: http://polar-keycloak:8080/realms/PolarBookshop
