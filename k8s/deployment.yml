@@ -51,6 +51,6 @@ spec:
             - name: edge-service-volume
               mountPath: /workspace/config
       volumes:
-        - name: edge-config-volume
+        - name: edge-service-volume
           configMap:
-            name: edge-service
+            name: edge-config
